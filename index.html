@@ -1,0 +1,220 @@
+<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Architectural AR Viewer</title><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script><script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js" crossorigin="anonymous"></script><meta property="og:image" content="./assets/preview.png"><script type="module" src="./common/scale-button.ts"></script><script type="module" src="./common/opacity-slider.ts"></script><script type="module" src="./common/object-isolation.ts"></script><script type="module" src="./common/info-button.ts"></script><script type="module" src="./common/reset-viewer.ts"></script></head><body><div id="opacity-slider-container"><div class="ui-section"><span class="ui-label">OPACITY</span> <input type="range" id="opacitySlider" min="0.0" max="1.0" step="0.05" value="1.0"></div><div class="ui-section custom-dropdown-wrapper"><span class="ui-label">SCALE</span> <select id="scaleSelect" class="hidden-native-select"><option value="1">1X</option><option value="2">2X</option><option value="3">3X</option><option value="4">4X</option></select><div class="custom-dropdown-btn" id="scaleDropdownBtn">1X</div><div class="custom-dropdown-list" id="scaleDropdownList"><div class="dropdown-item active" data-value="1">1X</div><div class="dropdown-item" data-value="2">2X</div><div class="dropdown-item" data-value="3">3X</div><div class="dropdown-item" data-value="4">4X</div></div></div><div class="ui-section custom-dropdown-wrapper"><span class="ui-label">ISOLATE</span> <select id="isolateSelect" class="hidden-native-select"><option value="Show All">Show All</option><option value="Object_01">Object_01</option><option value="Object_02">Object_02</option><option value="Object_03">Object_03</option><option value="Object_04">Object_04</option></select><div class="custom-dropdown-btn" id="isolateDropdownBtn">Show All</div><div class="custom-dropdown-list" id="isolateDropdownList"><div class="dropdown-item active" data-value="Show All">Show All</div><div class="dropdown-item" data-value="Object_01">Object_01</div><div class="dropdown-item" data-value="Object_02">Object_02</div><div class="dropdown-item" data-value="Object_03">Object_03</div><div class="dropdown-item" data-value="Object_04">Object_04</div></div></div><button id="htmlInfoBtn" class="html-btn">INFO</button> <button id="htmlResetBtn" class="html-btn reset-theme">RESET</button></div><div id="htmlInfoPanel" class="hidden"><h3>Project Information</h3><p>Building Model: 3D_AR-owncode</p><p>Interactive AR custom controls fully active.</p></div><style>/* ID ကို opacity-slider-container သို့ ပြောင်းလဲပြင်ဆင်ထားပါသည် */
+    #opacity-slider-container {
+      position: absolute;
+      bottom: 30px;          
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999999;        
+      background-color: rgba(43, 38, 59, 0.25); 
+      /* backdrop-filter: blur(12px);               
+      -webkit-backdrop-filter: blur(12px); */
+      border: 1.5px solid rgba(255, 255, 255, 0.25); 
+      border-radius: 24px;                    
+      padding: 12px 24px;                     
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;                              
+      pointer-events: auto;                   
+      box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    .ui-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .custom-dropdown-wrapper {
+      position: relative;
+    }
+
+    /* System Crash မဖြစ်စေရန် Native Select ကို UI ပေါ်မှ ဖျောက်ထားခြင်း */
+    .hidden-native-select {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .ui-label {
+      color: #ffffff;
+      font-family: system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      opacity: 0.85;
+    }
+
+    #opacitySlider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 140px;                           
+      height: 6px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+      outline: none;
+    }
+    #opacitySlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff; 
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Custom Dropdown Button Style */
+    .custom-dropdown-btn {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 6px 28px 6px 12px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      min-width: 60px;
+      position: relative;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23ffffff' d='M0 0l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    /* Wide Out Up Animation Dropdown List */
+    .custom-dropdown-list {
+      position: absolute;
+      bottom: calc(100% + 12px); 
+      left: 50%;
+      transform: translateX(-50%) scale(0.8); 
+      background-color: rgba(30, 25, 45, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      min-width: 110px;
+      box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: bottom center; 
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+      z-index: 1000000;
+      padding: 6px 0;
+    }
+
+    .custom-dropdown-list.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) scale(1); 
+    }
+
+    .dropdown-item {
+      padding: 8px 16px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: background 0.15s, color 0.15s;
+      text-align: center;
+    }
+    .dropdown-item:hover, .dropdown-item.active {
+      background-color: #9b5de5;
+      color: #ffffff;
+    }
+
+    .html-btn {
+      background: #9b5de5; 
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .html-btn:active { background: #7b3db5; transform: scale(0.95); }
+    
+    /* RESET BUTTON STYLE */
+    .reset-theme { background: #f15bb5; }
+    .reset-theme:active { background: #d13b95; }
+
+    #htmlInfoPanel {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000000;
+      background: rgba(30, 25, 45, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      font-family: system-ui, sans-serif;
+      width: 260px;
+    }
+    .hidden { display: none !important; }
+
+    @media screen and (max-width: 500px) {
+      #opacity-slider-container {
+        width: 94%;                           
+        max-width: 360px;
+        flex-wrap: wrap;                      
+        justify-content: space-between;        
+        gap: 12px 6px;                        
+        padding: 14px 16px;
+        border-radius: 20px;
+        bottom: 20px;
+      }
+      #opacitySlider { width: 90px; }
+      .custom-dropdown-btn { padding: 6px 22px 6px 8px; font-size: 11px; min-width: 50px; }
+    }</style><script>document.addEventListener('DOMContentLoaded', () => {
+      
+      const bridgeDropdown = (selectId, btnId, listId) => {
+        const nativeSelect = document.getElementById(selectId);
+        const customBtn = document.getElementById(btnId);
+        const customList = document.getElementById(listId);
+        
+        if (!nativeSelect || !customBtn || !customList) return;
+
+        customBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.custom-dropdown-list').forEach(l => {
+            if(l !== customList) l.classList.remove('show');
+          });
+          customList.classList.toggle('show');
+        });
+
+        customList.querySelectorAll('.dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const selectedVal = item.getAttribute('data-value');
+            
+            customBtn.textContent = item.textContent;
+            nativeSelect.value = selectedVal;
+            
+            customList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
+            // TS Scripts များ သိရှိစေရန် Native change event ပေးပို့ခြင်း
+            const event = new Event('change', { bubbles: true });
+            nativeSelect.dispatchEvent(event);
+            
+            customList.classList.remove('show');
+          });
+        });
+      };
+
+      bridgeDropdown('scaleSelect', 'scaleDropdownBtn', 'scaleDropdownList');
+      bridgeDropdown('isolateSelect', 'isolateDropdownBtn', 'isolateDropdownList');
+
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-dropdown-list').forEach(l => l.classList.remove('show'));
+      });
+    });</script><script src="bundle.js"></script></body></html>
